@@ -1,0 +1,15 @@
+# virtual environments
+.venv/
+.venv312/
+venv/
+
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# dataset (training only, too large to share)
+dataset/
+
+# pip cache
+pip-cache/
