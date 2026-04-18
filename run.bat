@@ -12,11 +12,11 @@ if not exist ".venv\Scripts\python.exe" (
     exit /b 1
 )
 
-:: Check model file
-if not exist "models\best50_50.h5" (
+:: Check MediaPipe model
+if not exist "models\hand_landmarker.task" (
     echo.
-    echo  [ERROR] Missing: models\best50_50.h5
-    echo  Make sure all model files are present.
+    echo  [ERROR] Missing: models\hand_landmarker.task
+    echo  Please run install.bat first.
     echo.
     pause
     exit /b 1
