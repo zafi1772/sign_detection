@@ -25,11 +25,11 @@ except Exception:
     _TK_AVAILABLE = False
 
 detection_graph, sess = detector_utils.load_inference_graph()
-predictor          = detector_utils.AsyncPredictor(smooth_frames=12, min_confidence=0.60)
+predictor          = detector_utils.AsyncPredictor(smooth_frames=20, min_confidence=0.75)
 
-CONFIRM_FRAMES   = 20
-COOLDOWN_FRAMES  = 25
-MIN_CONFIRM_CONF = 0.60
+CONFIRM_FRAMES   = 45          # ~1.5 s at 30 fps — hold sign longer before adding
+COOLDOWN_FRAMES  = 40          # pause between words
+MIN_CONFIRM_CONF = 0.75        # higher confidence required
 PANEL_W          = 320
 RECORD_TARGET    = 400          # samples per new word
 LANDMARK_DIR     = os.path.join('dataset', 'landmarks')
@@ -87,7 +87,7 @@ def _run_training():
             text=True)                # output goes to console — visible to user
         if res.returncode == 0:
             new_pred = detector_utils.AsyncPredictor(
-                smooth_frames=12, min_confidence=0.60)
+                smooth_frames=20, min_confidence=0.75)
             predictor = new_pred
             words = list(detector_utils.LABEL_MAP.values())
             _train_result = f'লোড হয়েছে: {", ".join(words)}'
@@ -122,13 +122,14 @@ def ask_word_name():
     return word.strip() if word else None
 
 
-# panel-local y-range of the Record button (updated each frame for mouse hit-test)
-_REC_BTN_Y = (58, 104)
+# panel-local y-ranges for clickable buttons
+_REC_BTN_Y   = (58, 104)
+_RESET_BTN_Y = (0, 0)
 
 # ── panel renderers ────────────────────────────────────────────────────────────
 def draw_detect_panel(width, height, fonts, label_name, confidence,
                       stable_count, cooldown, sentence, speaking):
-    global _REC_BTN_Y
+    global _REC_BTN_Y, _RESET_BTN_Y
     font_title, font_lg, font_md, font_sm, font_xs = fonts
     panel = np.full((height, width, 3), BG, dtype=np.uint8)
     img   = Image.fromarray(panel)
@@ -146,7 +147,16 @@ def draw_detect_panel(width, height, fonts, label_name, confidence,
     draw.text((14, y+14), '+ নতুন ইশারা রেকর্ড করুন', font=font_sm, fill=(255,220,180))
     draw.text((width-38, y+28), '[R]', font=font_xs, fill=(255,190,130))
     _REC_BTN_Y = (y, y+BTN_H)
-    y += BTN_H + 10
+    y += BTN_H + 6
+
+    # ── Reset button ───────────────────────────────────────────────────────────
+    RST_H = 36
+    draw.rounded_rectangle([(6,y),(width-6,y+RST_H)], radius=8, fill=(120,20,20))
+    draw.rounded_rectangle([(8,y+2),(width-8,y+RST_H//2)], radius=6, fill=(160,35,35))
+    draw.text((14, y+10), 'রিসেট — বাক্য মুছুন', font=font_sm, fill=(255,180,180))
+    draw.text((width-38, y+20), '[C]', font=font_xs, fill=(255,140,140))
+    _RESET_BTN_Y = (y, y+RST_H)
+    y += RST_H + 10
 
     # ── no-model prompt ────────────────────────────────────────────────────────
     if not predictor.ready():
@@ -396,14 +406,17 @@ if __name__ == '__main__':
     cv2.resizeWindow(win_title, im_width + PANEL_W, im_height)
 
     # ── mouse callback for clickable Record button ──────────────────────────────
-    _btn_clicked = [False]
+    _btn_clicked   = [False]
+    _reset_clicked = [False]
 
     def _on_mouse(event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            if x >= im_width:                          # click is in the panel
-                py = y                                 # panel y = window y
+            if x >= im_width:
+                py = y
                 if _REC_BTN_Y[0] <= py <= _REC_BTN_Y[1]:
                     _btn_clicked[0] = True
+                elif _RESET_BTN_Y[0] <= py <= _RESET_BTN_Y[1]:
+                    _reset_clicked[0] = True
 
     cv2.setMouseCallback(win_title, _on_mouse)
 
@@ -552,8 +565,10 @@ if __name__ == '__main__':
             elif key == ord('v') and sentence and not _speaking:
                 speak(' '.join(sentence))
 
-            elif key == ord('c'):
+            elif key == ord('c') or _reset_clicked[0]:
+                _reset_clicked[0] = False
                 sentence.clear(); stable_label=None; stable_count=0; cooldown=0
+                predictor.reset()
 
             elif key == ord('b') and sentence:
                 sentence.pop()
