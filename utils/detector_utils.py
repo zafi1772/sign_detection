@@ -150,7 +150,7 @@ def load_inference_graph():
     options = _HandLandmarkerOptions(
         base_options=_BaseOptions(model_asset_path=model_path),
         running_mode=_RunningMode.VIDEO,
-        num_hands=1,
+        num_hands=2,
         min_hand_detection_confidence=0.5,
         min_hand_presence_confidence=0.5,
         min_tracking_confidence=0.5,
@@ -214,30 +214,36 @@ def draw_box_on_image(predictor, num_hands_detect, score_thresh, scores, boxes,
                       im_width, im_height, image_np, landmarks_px=None,
                       raw_landmarks=None):
     """
-    predictor     : AsyncPredictor instance.
-    raw_landmarks : mediapipe landmark objects list (for landmark inference).
-    Returns (left, bottom, label_name, confidence).
+    Draws bounding boxes for all detected hands.
+    Submits landmark features from the primary (highest-score) hand for recognition.
+    Returns (left, bottom, label_name, confidence) for the primary hand.
     """
-    for i in range(num_hands_detect):
-        if scores[i] > score_thresh:
-            p1 = int(boxes[i][1] * im_width)
-            p2 = int(boxes[i][0] * im_height)
-            p3 = int(boxes[i][3] * im_width)
-            p4 = int(boxes[i][2] * im_height)
+    detected = [i for i in range(min(num_hands_detect, len(scores)))
+                if scores[i] > score_thresh]
 
+    if not detected:
+        predictor.reset()
+        return 0, 0, None, 0.0
+
+    result_left, result_bottom = 0, 0
+    for i in detected:
+        p1 = int(boxes[i][1] * im_width)
+        p2 = int(boxes[i][0] * im_height)
+        p3 = int(boxes[i][3] * im_width)
+        p4 = int(boxes[i][2] * im_height)
+
+        # Different box colours: primary=green, secondary=cyan
+        color = (77, 255, 9) if i == detected[0] else (0, 220, 220)
+        cv2.rectangle(image_np, (p1, p2), (p3, p4), color, 2, cv2.LINE_AA)
+
+        if i == detected[0]:
+            result_left, result_bottom = p1, p4
             if raw_landmarks and i < len(raw_landmarks):
                 feat = extract_landmark_features(raw_landmarks[i])
                 predictor.submit_landmarks(feat)
 
-            cv2.rectangle(image_np, (p1, p2), (p3, p4), (77, 255, 9), 2, cv2.LINE_AA)
-
-            label_name, confidence = predictor.get_result()
-            return p1, p4, label_name, confidence
-        else:
-            predictor.reset()
-            return 0, 0, None, 0.0
-
-    return 0, 0, None, 0.0
+    label_name, confidence = predictor.get_result()
+    return result_left, result_bottom, label_name, confidence
 
 
 def draw_fps_on_image(fps, image_np):

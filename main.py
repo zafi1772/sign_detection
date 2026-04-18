@@ -515,7 +515,7 @@ if __name__ == '__main__':
         # ── DETECT MODE ────────────────────────────────────────────────────────
         else:
             left, bottom, label_name, confidence = detector_utils.draw_box_on_image(
-                predictor, 1, args.score_thresh, scores, boxes,
+                predictor, 2, args.score_thresh, scores, boxes,
                 im_width, im_height, image_np,
                 landmarks_px=landmarks_px, raw_landmarks=raw_lms)
 
