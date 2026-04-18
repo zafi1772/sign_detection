@@ -11,7 +11,8 @@
       "Bash(.venv/Scripts/python -c \"import mediapipe as mp; print\\(dir\\(mp\\)\\)\")",
       "Bash(.venv/Scripts/python -c \"import mediapipe as mp; print\\(dir\\(mp.tasks\\)\\); print\\(dir\\(mp.tasks.vision\\)\\)\")",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git add *)"
     ]
   }
 }
