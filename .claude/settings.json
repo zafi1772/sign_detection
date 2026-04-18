@@ -9,7 +9,9 @@
       "Bash(PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python .venv/Scripts/python main.py)",
       "Bash(grep -r \"tf\\\\\\\\.Session\\\\|tf\\\\\\\\.compat\\\\\\\\.v1\\\\|Graph\\\\|feed_dict\" --include=\"*.py\")",
       "Bash(.venv/Scripts/python -c \"import mediapipe as mp; print\\(dir\\(mp\\)\\)\")",
-      "Bash(.venv/Scripts/python -c \"import mediapipe as mp; print\\(dir\\(mp.tasks\\)\\); print\\(dir\\(mp.tasks.vision\\)\\)\")"
+      "Bash(.venv/Scripts/python -c \"import mediapipe as mp; print\\(dir\\(mp.tasks\\)\\); print\\(dir\\(mp.tasks.vision\\)\\)\")",
+      "Bash(git remote *)",
+      "Bash(git push *)"
     ]
   }
 }

@@ -13,3 +13,10 @@ dataset/
 
 # pip cache
 pip-cache/
+
+# large model files
+models/best50_50.h5
+models/*.h5
+
+# claude internal
+.claude/
